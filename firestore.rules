@@ -1,0 +1,43 @@
+rules_version = '2';
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // ── users ─────────────────────────────────────────────────────────────────
+    match /users/{userId} {
+      allow read, write: if request.auth != null
+                         && request.auth.uid == userId;
+    }
+
+    // ── orders ────────────────────────────────────────────────────────────────
+    match /orders/{orderId} {
+      // Admin lê e atualiza qualquer pedido
+      allow read, update: if request.auth != null
+                          && request.auth.token.email == "aquasferium@gmail.com";
+
+      // Usuário lê seus próprios pedidos
+      allow read: if request.auth != null
+                  && resource.data.userId == request.auth.uid;
+
+      // Criação: userId deve bater com o uid autenticado
+      allow create: if request.auth != null
+                    && request.resource.data.userId == request.auth.uid;
+
+      allow delete: if false;
+    }
+
+    // ── products ──────────────────────────────────────────────────────────────
+    match /products/{productId} {
+      // Qualquer usuário autenticado pode ler
+      allow read: if request.auth != null;
+
+      // Somente admin pode criar, atualizar ou deletar
+      allow create, update, delete: if request.auth != null
+                                    && request.auth.token.email == "aquasferium@gmail.com";
+    }
+
+    match /{document=**} {
+      allow read, write: if false;
+    }
+  }
+}

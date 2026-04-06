@@ -1,36 +1,99 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# App Delivery
 
-## Getting Started
+Aplicativo de delivery mobile-first construído com Next.js, Firebase e Capacitor.
 
-First, run the development server:
+## Tecnologias
+
+- **Next.js 16** — App Router, `output: 'export'` para build estático
+- **Firebase** — Auth, Firestore, Cloud Functions, Cloud Messaging (FCM)
+- **Capacitor 8** — Deploy nativo Android com push notifications
+- **Zustand** — Gerenciamento de estado do carrinho
+- **Tailwind CSS v4** — Estilização com suporte a tema escuro
+
+## Funcionalidades
+
+- Catálogo de produtos com busca
+- Carrinho com seleção de data/hora de entrega
+- Autenticação (e-mail/senha e Google)
+- Painel administrativo (gerenciar pedidos e produtos)
+- Tema claro/escuro persistido
+- Push notifications via FCM (status do pedido em tempo real)
+
+## Estrutura do Projeto
+
+```
+app/
+  (app)/          # Rotas autenticadas (catálogo, carrinho, perfil, admin)
+  (auth)/         # Rotas públicas (login)
+components/       # Componentes reutilizáveis (auth, cart, catalog, ui)
+hooks/            # Custom hooks (useAuth, useCheckout, usePushNotifications)
+lib/firebase/     # Configuração e helpers do Firebase
+store/            # Zustand stores
+types/            # Tipos TypeScript
+functions/        # Firebase Cloud Functions
+```
+
+## Configuração
+
+### 1. Instalar dependências
+
+```bash
+npm install
+```
+
+### 2. Configurar Firebase
+
+Crie o arquivo `lib/firebase/firebaseConfig.ts` com as credenciais do seu projeto Firebase:
+
+```ts
+export const firebaseConfig = {
+  apiKey: "...",
+  authDomain: "...",
+  projectId: "...",
+  storageBucket: "...",
+  messagingSenderId: "...",
+  appId: "..."
+};
+```
+
+### 3. Rodar em desenvolvimento
 
 ```bash
 npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+Acesse [http://localhost:3000](http://localhost:3000).
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+## Build para Android (Capacitor)
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+```bash
+# Build estático do Next.js
+npm run build
 
-## Learn More
+# Sincronizar com o projeto Android
+npx cap sync android
 
-To learn more about Next.js, take a look at the following resources:
+# Abrir no Android Studio
+npx cap open android
+```
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+Coloque o arquivo `google-services.json` (baixado do Firebase Console) em `android/app/`.
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+## Deploy das Cloud Functions
 
-## Deploy on Vercel
+> Requer plano **Blaze** no Firebase.
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+```bash
+cd functions
+npm run build
+cd ..
+firebase deploy --only functions
+```
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+## Variáveis de Ambiente
+
+Nenhuma variável de ambiente é necessária — as credenciais do Firebase são configuradas diretamente em `lib/firebase/firebaseConfig.ts`.
+
+## Admin
+
+O usuário administrador é definido pela constante `ADMIN_EMAIL` em `lib/firebase/auth.ts`. Apenas esse usuário tem acesso ao painel `/admin`.
