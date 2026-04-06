@@ -26,7 +26,6 @@ android/local.properties
 
 # Secrets — never commit these
 android/app/google-services.json
-lib/firebase/firebaseConfig.ts
 
 # Misc
 .DS_Store
