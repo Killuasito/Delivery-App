@@ -3,10 +3,10 @@ import { useEffect, useState } from "react";
 import { ThemeToggle } from "@/components/ui/ThemeToggle";
 import {
   MapPin, CreditCard, ClipboardList, LogOut,
-  Pencil, Check, X, Package, Clock, ChevronRight,
+  Pencil, Check, X, Package, Clock, ChevronRight, Phone,
 } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
-import { getUserOrders, getUserProfile, saveUserProfile } from "@/lib/firebase/firestore";
+import { getUserProfile, saveUserProfile, subscribeUserOrders } from "@/lib/firebase/firestore";
 import { logOut } from "@/lib/firebase/auth";
 import { useRouter } from "next/navigation";
 import { Order, AddressData } from "@/types";
@@ -36,9 +36,13 @@ export default function ProfilePage() {
   const [cepError, setCepError]     = useState("");
 
   const [payment, setPayment] = useState("");
+  const [phone, setPhone]     = useState("");
+  const [editingPhone, setEditingPhone] = useState(false);
+  const [phoneDraft, setPhoneDraft]     = useState("");
 
-  const [orders, setOrders]           = useState<Order[]>([]);
-  const [loadingOrders, setLoadingOrders] = useState(true);
+  const [orders, setOrders]              = useState<Order[]>([]);
+  const [loadingOrders, setLoadingOrders]  = useState(true);
+  const [toastOrderId, setToastOrderId]    = useState<string | null>(null);
 
   // Load preferences from Firestore
   useEffect(() => {
@@ -46,15 +50,22 @@ export default function ProfilePage() {
     getUserProfile(user.uid).then((profile) => {
       setAddress(profile.address);
       setPayment(profile.payment);
+      setPhone(profile.phone ?? "");
     });
   }, [user]);
 
-  // Load orders
+  // Load orders with real-time updates
   useEffect(() => {
     if (!user) return;
-    getUserOrders(user.uid)
-      .then(setOrders)
-      .finally(() => setLoadingOrders(false));
+    const unsubscribe = subscribeUserOrders(user.uid, (updated, changedId) => {
+      setOrders(updated);
+      setLoadingOrders(false);
+      if (changedId) {
+        setToastOrderId(changedId);
+        setTimeout(() => setToastOrderId(null), 4000);
+      }
+    });
+    return () => unsubscribe();
   }, [user]);
 
   const fetchCep = async (raw: string) => {
@@ -102,6 +113,13 @@ export default function ProfilePage() {
     setPayment(method);
   };
 
+  const savePhone = () => {
+    if (!user) return;
+    saveUserProfile(user.uid, { phone: phoneDraft });
+    setPhone(phoneDraft);
+    setEditingPhone(false);
+  };
+
   const handleLogout = async () => {
     await logOut();
     router.replace("/login");
@@ -113,6 +131,14 @@ export default function ProfilePage() {
 
   return (
     <div className="flex flex-col min-h-screen">
+      {/* Status update toast */}
+      {toastOrderId && (
+        <div className="fixed top-4 left-1/2 -translate-x-1/2 z-50 bg-blue-600 text-white text-sm font-medium px-4 py-2.5 rounded-full shadow-lg flex items-center gap-2 animate-bounce">
+          <Package size={15} />
+          Seu pedido foi atualizado!
+        </div>
+      )}
+
       {/* Header */}
       <header className="sticky top-0 z-20 bg-white dark:bg-gray-900 border-b border-gray-100 dark:border-gray-800 shadow-sm px-4 py-4 flex items-center justify-between">
         <h1 className="text-lg font-bold text-gray-800 dark:text-gray-100">Meu Perfil</h1>
@@ -271,7 +297,53 @@ export default function ProfilePage() {
             ))}
           </div>
         </section>
-
+        {/* ── Telefone ────────────────────────── */}
+        <section className="bg-white dark:bg-gray-800 rounded-2xl border border-gray-100 dark:border-gray-700 shadow-sm overflow-hidden">
+          <div className="px-4 py-3 border-b border-gray-50 dark:border-gray-700 flex items-center justify-between">
+            <div className="flex items-center gap-2">
+              <Phone size={15} className="text-blue-600" />
+              <h2 className="font-semibold text-gray-800 dark:text-gray-100">Telefone</h2>
+              {!phone && <span className="text-xs bg-orange-100 text-orange-600 font-medium px-2 py-0.5 rounded-full">Obrigatório</span>}
+            </div>
+            <button onClick={() => { setPhoneDraft(phone); setEditingPhone(true); }} className="p-1.5 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors">
+              <Pencil size={14} className="text-gray-400" />
+            </button>
+          </div>
+          <div className="px-4 py-3">
+            {editingPhone ? (
+              <div className="space-y-2">
+                <input
+                  type="tel"
+                  value={phoneDraft}
+                  onChange={(e) => {
+                    const digits = e.target.value.replace(/\D/g, "").slice(0, 11);
+                    let masked = digits;
+                    if (digits.length > 2) masked = `(${digits.slice(0, 2)}) ${digits.slice(2)}`;
+                    if (digits.length > 7) masked = `(${digits.slice(0, 2)}) ${digits.slice(2, 7)}-${digits.slice(7)}`;
+                    setPhoneDraft(masked);
+                  }}
+                  placeholder="(99) 99999-9999"
+                  maxLength={15}
+                  className="w-full text-sm border border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-700 rounded-xl px-3 py-2.5 focus:outline-none focus:ring-2 focus:ring-blue-400 text-gray-800 dark:text-gray-100 placeholder:text-gray-400"
+                />
+                <div className="flex gap-2">
+                  <button onClick={savePhone} className="flex items-center gap-1.5 text-xs font-semibold bg-blue-600 text-white px-3 py-1.5 rounded-lg">
+                    <Check size={13} /> Salvar
+                  </button>
+                  <button onClick={() => setEditingPhone(false)} className="flex items-center gap-1.5 text-xs text-gray-500 px-3 py-1.5 rounded-lg border border-gray-200 dark:border-gray-600">
+                    <X size={13} /> Cancelar
+                  </button>
+                </div>
+              </div>
+            ) : phone ? (
+              <p className="text-sm text-gray-700 dark:text-gray-300">{phone}</p>
+            ) : (
+              <button onClick={() => { setPhoneDraft(""); setEditingPhone(true); }} className="text-sm text-blue-600 font-semibold hover:underline">
+                + Adicionar telefone
+              </button>
+            )}
+          </div>
+        </section>
         {/* ── Meus Pedidos ─────────────────────── */}
         <section className="bg-white dark:bg-gray-800 rounded-2xl border border-gray-100 dark:border-gray-700 shadow-sm overflow-hidden">
           <div className="px-4 py-3 border-b border-gray-50 dark:border-gray-700 flex items-center gap-2">
@@ -317,7 +389,7 @@ export default function ProfilePage() {
                 const deliveryDate = new Date(order.deliveryDate + "T12:00:00");
 
                 return (
-                  <div key={order.id} className="px-4 py-3 space-y-2">
+                  <div key={order.id} className={`px-4 py-3 space-y-2 transition-all duration-700 ${toastOrderId === order.id ? "bg-blue-50 dark:bg-blue-900/20" : ""}`}>
                     <div className="flex items-center justify-between">
                       <div className="flex items-center gap-1.5 text-xs text-gray-400 dark:text-gray-500">
                         <Clock size={12} />

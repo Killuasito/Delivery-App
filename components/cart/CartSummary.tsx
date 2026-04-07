@@ -31,7 +31,8 @@ export const CartSummary = () => {
   const [cepLoading, setCepLoading]     = useState(false);
   const [cepError, setCepError]         = useState("");
   const [paymentMethod, setPaymentMethod] = useState("");
-  const [formErrors, setFormErrors]     = useState<{ date?: string; address?: string; payment?: string }>({});
+  const [phone, setPhone]               = useState("");
+  const [formErrors, setFormErrors]     = useState<{ date?: string; address?: string; payment?: string; phone?: string }>({});
 
   useEffect(() => {
     if (!user) return;
@@ -41,6 +42,7 @@ export const CartSummary = () => {
         setAddress(profile.address);
       }
       if (profile.payment) setPaymentMethod(profile.payment);
+      if (profile.phone) setPhone(profile.phone);
     });
   }, [user]);
 
@@ -72,12 +74,14 @@ export const CartSummary = () => {
   };
 
   const validate = () => {
-    const errors: { date?: string; address?: string; payment?: string } = {};
+    const errors: { date?: string; address?: string; payment?: string; phone?: string } = {};
     if (!deliveryDate) errors.date = "Selecione uma data de entrega.";
     if (!address.logradouro || !address.numero)
       errors.address = "Preencha o endereço completo.";
     if (!paymentMethod)
       errors.payment = "Selecione um método de pagamento.";
+    if (!phone)
+      errors.phone = "Cadastre seu telefone no perfil antes de finalizar o pedido.";
     setFormErrors(errors);
     return Object.keys(errors).length === 0;
   };
@@ -285,6 +289,21 @@ export const CartSummary = () => {
         <div className="flex items-start gap-2 bg-red-50 border border-red-200 rounded-xl p-3">
           <AlertCircle size={16} className="text-red-500 mt-0.5 shrink-0" />
           <p className="text-sm text-red-600">{error}</p>
+        </div>
+      )}
+
+      {formErrors.phone && (
+        <div className="flex items-start gap-2 bg-orange-50 border border-orange-200 rounded-xl p-3">
+          <AlertCircle size={16} className="text-orange-500 mt-0.5 shrink-0" />
+          <p className="text-sm text-orange-700">
+            {formErrors.phone}{" "}
+            <button
+              className="font-semibold underline"
+              onClick={() => router.push("/profile")}
+            >
+              Ir para o Perfil
+            </button>
+          </p>
         </div>
       )}
 

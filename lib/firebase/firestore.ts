@@ -9,6 +9,7 @@ import {
   query,
   where,
   orderBy,
+  onSnapshot,
   Timestamp,
 } from "firebase/firestore";
 import { db } from "./firebaseConfig";
@@ -20,11 +21,12 @@ const EMPTY_ADDRESS: AddressData = {
 
 export const getUserProfile = async (userId: string): Promise<UserProfile> => {
   const snap = await getDoc(doc(db, "users", userId));
-  if (!snap.exists()) return { address: EMPTY_ADDRESS, payment: "" };
+  if (!snap.exists()) return { address: EMPTY_ADDRESS, payment: "", phone: "" };
   const data = snap.data();
   return {
     address: data.address ?? EMPTY_ADDRESS,
     payment: data.payment ?? "",
+    phone: data.phone ?? "",
   };
 };
 
@@ -76,6 +78,37 @@ export const getUserOrders = async (userId: string): Promise<Order[]> => {
     createdAt:
       doc.data().createdAt?.toDate?.()?.toISOString() ?? doc.data().createdAt,
   })) as Order[];
+};
+
+export const subscribeUserOrders = (
+  userId: string,
+  onUpdate: (orders: Order[], changedId: string | null) => void
+): (() => void) => {
+  const q = query(
+    collection(db, "orders"),
+    where("userId", "==", userId),
+    orderBy("createdAt", "desc")
+  );
+
+  let firstLoad = true;
+
+  return onSnapshot(q, (snapshot) => {
+    const orders = snapshot.docs.map((d) => ({
+      id: d.id,
+      ...d.data(),
+      createdAt:
+        d.data().createdAt?.toDate?.()?.toISOString() ?? d.data().createdAt,
+    })) as Order[];
+
+    let changedId: string | null = null;
+    if (!firstLoad) {
+      const modified = snapshot.docChanges().find((c) => c.type === "modified");
+      if (modified) changedId = modified.doc.id;
+    }
+    firstLoad = false;
+
+    onUpdate(orders, changedId);
+  });
 };
 
 export const getAllOrders = async (): Promise<Order[]> => {

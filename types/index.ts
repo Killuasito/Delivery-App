@@ -46,4 +46,5 @@ export interface AddressData {
 export interface UserProfile {
   address: AddressData;
   payment: string;
+  phone: string;
 }
