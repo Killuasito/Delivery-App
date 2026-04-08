@@ -7,7 +7,7 @@
     "build": "next build",
     "start": "next start",
     "lint": "eslint",
-    "app:update": "npm run build && npx cap sync",
+    "update": "npm run build && npx cap sync",
     "git": "git add . && git commit -m 'update' && git push"
   },
   "dependencies": {

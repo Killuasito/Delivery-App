@@ -3,7 +3,7 @@ import { useEffect, useState } from "react";
 import { ThemeToggle } from "@/components/ui/ThemeToggle";
 import {
   MapPin, CreditCard, ClipboardList, LogOut,
-  Pencil, Check, X, Package, Clock, ChevronRight, Phone,
+  Pencil, Check, X, Package, Clock, ChevronRight, Phone, User,
 } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
 import { getUserProfile, saveUserProfile, subscribeUserOrders } from "@/lib/firebase/firestore";
@@ -35,8 +35,10 @@ export default function ProfilePage() {
   const [cepLoading, setCepLoading] = useState(false);
   const [cepError, setCepError]     = useState("");
 
-  const [payment, setPayment] = useState("");
-  const [phone, setPhone]     = useState("");
+  const [payment, setPayment]   = useState("");
+  const [phone, setPhone]       = useState("");
+  const [fullName, setFullName] = useState("");
+  const [cpf, setCpf]           = useState("");
   const [editingPhone, setEditingPhone] = useState(false);
   const [phoneDraft, setPhoneDraft]     = useState("");
 
@@ -51,6 +53,8 @@ export default function ProfilePage() {
       setAddress(profile.address);
       setPayment(profile.payment);
       setPhone(profile.phone ?? "");
+      setFullName(profile.fullName ?? "");
+      setCpf(profile.cpf ?? "");
     });
   }, [user]);
 
@@ -147,12 +151,12 @@ export default function ProfilePage() {
 
       {/* User card */}
       <div className="bg-white dark:bg-gray-900 px-4 py-5 flex items-center gap-4 border-b border-gray-100 dark:border-gray-800">
-        <div className="w-14 h-14 bg-blue-600 rounded-2xl flex items-center justify-center text-white text-xl font-bold shrink-0 shadow-md shadow-blue-100">
+        <div className="w-14 h-14 bg-blue-600 rounded-2xl flex items-center justify-center text-white text-xl font-bold shrink-0 shadow-md shadow-blue-400">
           {initials}
         </div>
         <div className="min-w-0">
           <p className="font-bold text-gray-800 dark:text-gray-100 truncate">
-            {user?.displayName ?? "Usuário"}
+            {fullName ? fullName.trim().split(" ")[0] : (user?.displayName?.split(" ")[0] ?? "Usuário")}
           </p>
           <p className="text-sm text-gray-500 dark:text-gray-400 truncate">{user?.email}</p>
         </div>
@@ -297,6 +301,31 @@ export default function ProfilePage() {
             ))}
           </div>
         </section>
+        {/* ── Dados Pessoais ───────────────────── */}
+        {(fullName || cpf) && (
+          <section className="bg-white dark:bg-gray-800 rounded-2xl border border-gray-100 dark:border-gray-700 shadow-sm overflow-hidden">
+            <div className="px-4 py-3 border-b border-gray-50 dark:border-gray-700">
+              <h2 className="font-semibold text-gray-800 dark:text-gray-100 flex items-center gap-2">
+                <User size={15} className="text-blue-600" />
+                Dados Pessoais
+              </h2>
+            </div>
+            <div className="px-4 py-3 space-y-3">
+              {fullName && (
+                <div>
+                  <p className="text-xs text-gray-400 dark:text-gray-500 mb-0.5">Nome Completo</p>
+                  <p className="text-sm text-gray-700 dark:text-gray-200 font-medium">{fullName}</p>
+                </div>
+              )}
+              {cpf && (
+                <div>
+                  <p className="text-xs text-gray-400 dark:text-gray-500 mb-0.5">CPF</p>
+                  <p className="text-sm text-gray-700 dark:text-gray-200 font-medium tracking-wide">{cpf}</p>
+                </div>
+              )}
+            </div>
+          </section>
+        )}
         {/* ── Telefone ────────────────────────── */}
         <section className="bg-white dark:bg-gray-800 rounded-2xl border border-gray-100 dark:border-gray-700 shadow-sm overflow-hidden">
           <div className="px-4 py-3 border-b border-gray-50 dark:border-gray-700 flex items-center justify-between">
@@ -443,7 +472,7 @@ export default function ProfilePage() {
         {/* ── Logout ───────────────────────────── */}
         <button
           onClick={handleLogout}
-          className="w-full flex items-center justify-between px-4 py-3.5 bg-white rounded-2xl border border-gray-100 shadow-sm text-red-500 hover:bg-red-50 transition-colors"
+          className="w-full flex items-center justify-between px-4 py-3.5 bg-white rounded-2xl border border-gray-100 shadow-sm text-red-500 hover:bg-red-50 transition-colors dark:bg-gray-800 dark:border-gray-700 dark:hover:bg-red-900/10"
         >
           <div className="flex items-center gap-2 font-medium text-sm">
             <LogOut size={16} />

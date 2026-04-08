@@ -49,7 +49,7 @@ export default function CatalogPage() {
 
           <button
             onClick={() => router.push("/cart")}
-            className="relative p-2.5 bg-blue-600 rounded-xl text-white shadow-md shadow-blue-200 hover:bg-blue-700 transition-colors"
+            className="relative p-2.5 bg-blue-600 rounded-xl text-white shadow-md shadow-blue-200 hover:bg-blue-700 transition-colors dark:shadow-blue-400"
           >
             <ShoppingCart size={20} />
             {totalItems > 0 && (
