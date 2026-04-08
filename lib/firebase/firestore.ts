@@ -21,12 +21,14 @@ const EMPTY_ADDRESS: AddressData = {
 
 export const getUserProfile = async (userId: string): Promise<UserProfile> => {
   const snap = await getDoc(doc(db, "users", userId));
-  if (!snap.exists()) return { address: EMPTY_ADDRESS, payment: "", phone: "" };
+  if (!snap.exists()) return { address: EMPTY_ADDRESS, payment: "", phone: "", fullName: "", cpf: "" };
   const data = snap.data();
   return {
     address: data.address ?? EMPTY_ADDRESS,
     payment: data.payment ?? "",
     phone: data.phone ?? "",
+    fullName: data.fullName ?? "",
+    cpf: data.cpf ?? "",
   };
 };
 

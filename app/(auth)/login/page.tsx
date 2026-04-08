@@ -3,13 +3,15 @@ import { useState, useEffect } from "react";
 import { signInWithGoogle, signInWithEmail, signUpWithEmail } from "@/lib/firebase/auth";
 import { saveUserProfile } from "@/lib/firebase/firestore";
 import { useRouter } from "next/navigation";
-import { Loader2, Mail, Lock, Package, Phone } from "lucide-react";
+import { Loader2, Mail, Lock, Package, Phone, User, CreditCard } from "lucide-react";
 
 export default function LoginPage() {
   const [mode, setMode] = useState<"login" | "register">("login");
   const [email, setEmail]       = useState("");
   const [password, setPassword] = useState("");
+  const [fullName, setFullName] = useState("");
   const [phone, setPhone]       = useState("");
+  const [cpf, setCpf]           = useState("");
   const [loading, setLoading]   = useState(false);
   const [error, setError]       = useState("");
   const [isNative, setIsNative] = useState(false);
@@ -29,13 +31,23 @@ export default function LoginPage() {
       if (mode === "login") {
         await signInWithEmail(email, password);
       } else {
+        if (!fullName.trim() || fullName.trim().split(" ").length < 2) {
+          setError("Informe seu nome completo.");
+          setLoading(false);
+          return;
+        }
         if (!phone.replace(/\D/g, "").match(/^\d{10,11}$/)) {
           setError("Informe um número de telefone válido com DDD.");
           setLoading(false);
           return;
         }
+        if (!cpf.replace(/\D/g, "").match(/^\d{11}$/)) {
+          setError("Informe um CPF válido.");
+          setLoading(false);
+          return;
+        }
         const newUser = await signUpWithEmail(email, password);
-        await saveUserProfile(newUser.uid, { phone });
+        await saveUserProfile(newUser.uid, { fullName: fullName.trim(), phone, cpf });
       }
       router.replace("/catalog");
     } catch (err: unknown) {
@@ -128,24 +140,56 @@ export default function LoginPage() {
           </div>
 
           {mode === "register" && (
-            <div className="relative">
-              <Phone size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 dark:text-gray-500" />
-              <input
-                type="tel"
-                placeholder="(99) 99999-9999"
-                value={phone}
-                onChange={(e) => {
-                  const digits = e.target.value.replace(/\D/g, "").slice(0, 11);
-                  let masked = digits;
-                  if (digits.length > 2) masked = `(${digits.slice(0, 2)}) ${digits.slice(2)}`;
-                  if (digits.length > 7) masked = `(${digits.slice(0, 2)}) ${digits.slice(2, 7)}-${digits.slice(7)}`;
-                  setPhone(masked);
-                }}
-                required
-                maxLength={15}
-                className="w-full pl-10 pr-4 py-3 rounded-xl border border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-800 dark:text-gray-100 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
-              />
-            </div>
+            <>
+              <div className="relative">
+                <User size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 dark:text-gray-500" />
+                <input
+                  type="text"
+                  placeholder="Nome Completo"
+                  value={fullName}
+                  onChange={(e) => setFullName(e.target.value)}
+                  required
+                  className="w-full pl-10 pr-4 py-3 rounded-xl border border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-800 dark:text-gray-100 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                />
+              </div>
+              <div className="relative">
+                <Phone size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 dark:text-gray-500" />
+                <input
+                  type="tel"
+                  placeholder="(99) 99999-9999"
+                  value={phone}
+                  onChange={(e) => {
+                    const digits = e.target.value.replace(/\D/g, "").slice(0, 11);
+                    let masked = digits;
+                    if (digits.length > 2) masked = `(${digits.slice(0, 2)}) ${digits.slice(2)}`;
+                    if (digits.length > 7) masked = `(${digits.slice(0, 2)}) ${digits.slice(2, 7)}-${digits.slice(7)}`;
+                    setPhone(masked);
+                  }}
+                  required
+                  maxLength={15}
+                  className="w-full pl-10 pr-4 py-3 rounded-xl border border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-800 dark:text-gray-100 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                />
+              </div>
+              <div className="relative">
+                <CreditCard size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 dark:text-gray-500" />
+                <input
+                  type="text"
+                  placeholder="000.000.000-00"
+                  value={cpf}
+                  onChange={(e) => {
+                    const digits = e.target.value.replace(/\D/g, "").slice(0, 11);
+                    let masked = digits;
+                    if (digits.length > 3) masked = `${digits.slice(0, 3)}.${digits.slice(3)}`;
+                    if (digits.length > 6) masked = `${digits.slice(0, 3)}.${digits.slice(3, 6)}.${digits.slice(6)}`;
+                    if (digits.length > 9) masked = `${digits.slice(0, 3)}.${digits.slice(3, 6)}.${digits.slice(6, 9)}-${digits.slice(9)}`;
+                    setCpf(masked);
+                  }}
+                  required
+                  maxLength={14}
+                  className="w-full pl-10 pr-4 py-3 rounded-xl border border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-800 dark:text-gray-100 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                />
+              </div>
+            </>
           )}
 
           {error && (
