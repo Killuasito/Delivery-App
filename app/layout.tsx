@@ -5,8 +5,12 @@ import "./globals.css";
 const inter = Inter({ subsets: ["latin"] });
 
 export const metadata: Metadata = {
-  title: "DeliveryApp",
+  title: "App-Delivery",
   description: "Agendamento de entrega de mercadorias",
+  icons: {
+    icon: "/App-Delivery.png",
+    apple: "/App-Delivery.png",
+  },
 };
 
 export const viewport: Viewport = {

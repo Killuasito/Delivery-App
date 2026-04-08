@@ -1,7 +1,7 @@
 <?xml version='1.0' encoding='utf-8'?>
 <resources>
-    <string name="app_name">app-delivery</string>
-    <string name="title_activity_main">app-delivery</string>
+    <string name="app_name">App-Delivery</string>
+    <string name="title_activity_main">App-Delivery</string>
     <string name="package_name">com.delivery.app</string>
     <string name="custom_url_scheme">com.delivery.app</string>
 </resources>
