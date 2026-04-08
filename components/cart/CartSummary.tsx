@@ -12,6 +12,19 @@ import { AddressData } from "@/types";
 
 const PAYMENT_OPTIONS = ["Pix", "Cartão de Crédito", "Cartão de Débito"];
 
+/** Calcula o frete com base no prefixo do CEP de destino.
+ *  Origem: São Roque/SP (181xx) */
+const getDeliveryFee = (cep: string): number => {
+  const digits = cep.replace(/\D/g, "");
+  if (digits.length < 5) return 0;
+  const prefix = parseInt(digits.slice(0, 5), 10);
+  if (prefix >= 18100 && prefix <= 18199) return 6;    // São Roque
+  if (prefix >= 18000 && prefix <= 18999) return 10;   // Região de Sorocaba
+  if (prefix >= 1000  && prefix <= 19999) return 15;   // Interior SP
+  if (prefix >= 1     && prefix <= 99999) return 20;   // Demais estados
+  return 20;
+};
+
 const EMPTY_ADDRESS: AddressData = {
   cep: "", logradouro: "", numero: "", complemento: "", bairro: "", localidade: "", uf: "",
 };
@@ -33,6 +46,8 @@ export const CartSummary = () => {
   const [paymentMethod, setPaymentMethod] = useState("");
   const [phone, setPhone]               = useState("");
   const [formErrors, setFormErrors]     = useState<{ date?: string; address?: string; payment?: string; phone?: string }>({});
+
+  const deliveryFee = getDeliveryFee(address.cep);
 
   useEffect(() => {
     if (!user) return;
@@ -94,6 +109,7 @@ export const CartSummary = () => {
       deliveryDate,
       deliveryAddress: addressToString(address),
       paymentMethod,
+      totalPrice: getTotalPrice() + deliveryFee,
     });
   };
 
@@ -277,11 +293,19 @@ export const CartSummary = () => {
         </div>
         <div className="flex justify-between text-sm text-gray-600 dark:text-gray-300">
           <span>Entrega</span>
-          <span className="text-green-600 dark:text-green-400 font-medium">Grátis</span>
+          {address.cep.replace(/\D/g, "").length === 8 ? (
+            <span className="font-medium text-gray-800 dark:text-gray-100">
+              R$ {deliveryFee.toFixed(2).replace(".", ",")}
+            </span>
+          ) : (
+            <span className="text-gray-400 dark:text-gray-500 italic text-xs self-center">informe o CEP</span>
+          )}
         </div>
         <div className="border-t border-blue-100 dark:border-blue-900 pt-2 flex justify-between font-bold text-gray-800 dark:text-gray-100">
           <span>Total</span>
-          <span className="text-blue-600 dark:text-blue-400 text-lg">R$ {getTotalPrice().toFixed(2).replace(".", ",")}</span>
+          <span className="text-blue-600 dark:text-blue-400 text-lg">
+            R$ {(getTotalPrice() + (address.cep.replace(/\D/g, "").length === 8 ? deliveryFee : 0)).toFixed(2).replace(".", ",")}
+          </span>
         </div>
       </div>
 
@@ -311,7 +335,7 @@ export const CartSummary = () => {
         <button
           onClick={handleCheckout}
           disabled={status === "loading"}
-          className="w-full bg-blue-600 hover:bg-blue-700 disabled:bg-blue-300 text-white font-bold py-4 rounded-2xl transition-all flex items-center justify-center gap-2 text-base shadow-md shadow-blue-200"
+          className="w-full bg-blue-600 hover:bg-blue-700 disabled:bg-blue-300 text-white font-bold py-4 rounded-2xl transition-all flex items-center justify-center gap-2 text-base shadow-md shadow-blue-200 dark:shadow-blue-400"
         >
           {status === "loading" ? (
             <>

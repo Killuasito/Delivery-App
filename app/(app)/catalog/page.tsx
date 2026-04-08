@@ -3,7 +3,7 @@ import { useState, useEffect } from "react";
 import { Package, ShoppingCart } from "lucide-react";
 import { ProductCard } from "@/components/catalog/ProductCard";
 import { PageSkeleton } from "@/components/ui/Skeleton";
-import { getProducts } from "@/lib/firebase/firestore";
+import { getProducts, getUserProfile } from "@/lib/firebase/firestore";
 import { useCartStore } from "@/store/cartStore";
 import { useAuth } from "@/hooks/useAuth";
 import { useRouter } from "next/navigation";
@@ -13,6 +13,7 @@ export default function CatalogPage() {
   const [products, setProducts] = useState<Product[]>([]);
   const [loading, setLoading] = useState(true);
   const [activeCategory, setActiveCategory] = useState("Todos");
+  const [firstName, setFirstName] = useState("");
   const { getTotalItems } = useCartStore();
   const { user } = useAuth();
   const router = useRouter();
@@ -22,6 +23,14 @@ export default function CatalogPage() {
       .then(setProducts)
       .finally(() => setLoading(false));
   }, []);
+
+  useEffect(() => {
+    if (!user) return;
+    getUserProfile(user.uid).then((profile) => {
+      if (profile.fullName) setFirstName(profile.fullName.trim().split(" ")[0]);
+      else if (user.displayName) setFirstName(user.displayName.split(" ")[0]);
+    });
+  }, [user]);
 
   const categories = ["Todos", ...Array.from(new Set(products.map((p) => p.category)))];
 
@@ -39,7 +48,7 @@ export default function CatalogPage() {
         <div className="px-4 py-4 flex items-center justify-between">
           <div>
             <p className="text-xs text-gray-400 dark:text-gray-500">
-              Olá, {user?.displayName?.split(" ")[0] ?? "Usuário"} 👋
+              Olá, {firstName || user?.displayName?.split(" ")[0] || "você"} 👋
             </p>
             <h1 className="text-lg font-bold text-gray-800 dark:text-gray-100 flex items-center gap-2">
               <Package size={20} className="text-blue-600" />

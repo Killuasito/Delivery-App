@@ -198,7 +198,7 @@ export default function AdminPage() {
           <>
             <button
               onClick={() => { setShowForm((v) => !v); setTimeout(() => formRef.current?.scrollIntoView({ behavior: "smooth" }), 100); }}
-              className="w-full flex items-center justify-center gap-2 py-3 rounded-2xl bg-blue-600 text-white font-medium text-sm shadow-md shadow-blue-100 hover:bg-blue-700 transition-colors"
+              className="w-full flex items-center justify-center gap-2 py-3 rounded-2xl bg-blue-600 text-white font-medium text-sm shadow-md shadow-blue-100 hover:bg-blue-700 transition-colors dark:shadow-blue-400"
             >
               {showForm ? <ChevronUp size={16} /> : <Plus size={16} />}
               {showForm ? "Cancelar" : "Adicionar Produto"}

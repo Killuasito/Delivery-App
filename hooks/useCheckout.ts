@@ -9,6 +9,7 @@ interface CheckoutData {
   deliveryDate: string;
   deliveryAddress: string;
   paymentMethod: string;
+  totalPrice: number;
 }
 
 type CheckoutStatus = "idle" | "loading" | "success" | "error";
@@ -18,7 +19,7 @@ export const useCheckout = () => {
   const [orderId, setOrderId] = useState<string | null>(null);
   const [error, setError]     = useState<string | null>(null);
 
-  const { items, getTotalPrice, clearCart } = useCartStore();
+  const { items, clearCart } = useCartStore();
 
   const checkout = async (data: CheckoutData) => {
     if (items.length === 0) {
@@ -33,7 +34,6 @@ export const useCheckout = () => {
       const id = await createOrder({
         ...data,
         items,
-        totalPrice: getTotalPrice(),
       });
 
       setOrderId(id);
